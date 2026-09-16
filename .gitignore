@@ -59,3 +59,11 @@ wheels/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flake8
+.flake8_cache/

@@ -1,0 +1,26 @@
+[
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Как быстро вы ощущаете усталость во время программирования?",
+    "answer": "3-5 часов"
+  },
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Как часто вы занимаетесь программированием?",
+    "answer": "3-4 раза в неделю"
+  },
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Замечаете ли вы улучшение памяти и логики?",
+    "answer": "Да, значительно"
+  },
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Ваши ощущения от процесса программирования",
+    "answer": "Смешанные, иногда есть, иногда нет весомого результата, но факт наличия уже даёт понять, что я время даром не просиживаю"
+  }
+]
