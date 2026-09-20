@@ -42,22 +42,14 @@
 Установка зависимостей:
 pip install -r requirements.txt
 
-text
-
 ## Запуск программы
 python main.py
-
-text
 
 ## Запуск тестов
 pytest
 
-text
-
 ## Проверка качества кода
 flake8 .
-
-text
 
 ## План развития
 
