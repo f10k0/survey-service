@@ -1,0 +1,20 @@
+[
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Как часто вы программируете?",
+    "answer": "Несколько раз в неделю"
+  },
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Какой язык предпочитаете?",
+    "answer": "Python"
+  },
+  {
+    "user_email": "ruster.korshik@yandex.ru",
+    "survey_id": 1,
+    "question": "Ваш комментарий",
+    "answer": "Круто опрос, спасибо за выделенное время на его создание"
+  }
+]
