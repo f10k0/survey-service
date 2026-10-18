@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Главная - Сервис опросов
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-4">Сервис проведения опросов</h1>
+
+    <p class="lead">
+        Приложение для создания опросов и сбора ответов.
+    </p>
+    <p>
+        Сервис хранит опросы, вопросы, пользователей и ответы и показывает
+        статистику по каждому опросу.
+    </p>
+    <p>Основные разделы:</p>
+    <a href="{% url 'surveys:list' %}" class="btn btn-primary me-2">
+        Опросы
+    </a>
+    <a href="{% url 'responses:list' %}" class="btn btn-secondary">
+        Ответы
+    </a>
+{% endblock %}

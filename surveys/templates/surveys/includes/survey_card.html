@@ -1,0 +1,18 @@
+<article class="card survey-card">
+    <div class="card-body">
+        <h2 class="card-title h5">
+            {{ survey.title|default:"Без названия" }}
+        </h2>
+
+        <p class="card-text">
+            Тема: {{ survey.topic }}<br>
+            Вопросов: {{ survey.questions|length }}<br>
+            Статус: {% include "surveys/includes/survey_status.html" %}
+        </p>
+
+        <a href="{% url 'surveys:detail' survey.id %}"
+           class="btn btn-primary">
+            Подробнее
+        </a>
+    </div>
+</article>

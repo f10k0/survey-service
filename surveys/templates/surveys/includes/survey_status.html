@@ -1,0 +1,9 @@
+{% if survey.is_active %}
+    <span class="badge bg-success survey-status survey-status-active">
+        {{ survey.status }}
+    </span>
+{% else %}
+    <span class="badge bg-secondary survey-status survey-status-closed">
+        {{ survey.status|default:"не указан" }}
+    </span>
+{% endif %}

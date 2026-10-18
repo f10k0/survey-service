@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "name": "Руслан Коршиков",
+    "email": "ruster.korshik@yandex.ru",
+    "age": 20,
+    "is_registered": true
+  }
+]

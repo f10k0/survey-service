@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Ответы - Сервис опросов
+{% endblock %}
+
+{% block content %}
+    <h1>Ответы</h1>
+
+    <p>Всего ответов: {{ responses|length }}</p>
+
+    <ul class="list-group">
+        {% for response in responses %}
+            <li class="list-group-item">
+                <a href="{% url 'responses:detail' response.id %}">
+                    Ответ №{{ response.id }}:
+                    {{ response.user.name|default:"Аноним" }} &rarr;
+                    {{ response.survey.title }}
+                </a>
+            </li>
+        {% empty %}
+            <li class="list-group-item">Ответов пока нет.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

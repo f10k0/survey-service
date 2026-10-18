@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if survey %}
+        {{ survey.title }} - Сервис опросов
+    {% else %}
+        Опрос не найден - Сервис опросов
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if survey %}
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">{{ survey.title }}</h1>
+
+                <p class="card-text">
+                    <strong>ID:</strong> {{ survey.id }}
+                </p>
+
+                <p class="card-text">
+                    <strong>Тема:</strong> {{ survey.topic }}
+                </p>
+
+                <p class="card-text">
+                    <strong>Дата создания:</strong> {{ survey.creation_date }}
+                </p>
+
+                <p class="card-text">
+                    <strong>Статус:</strong>
+                    {% include "surveys/includes/survey_status.html" %}
+                </p>
+            </div>
+        </div>
+
+        <h2 class="h4 mt-4">Вопросы ({{ survey.questions|length }})</h2>
+        <ul class="list-group">
+            {% for question in survey.questions %}
+                <li class="list-group-item">
+                    {{ question.text }}
+                    {% if question.is_open %}
+                        (открытый вопрос)
+                    {% else %}
+                        (варианты: {{ question.options|join:", " }})
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li class="list-group-item">Вопросов нет.</li>
+            {% endfor %}
+        </ul>
+
+        <h2 class="h4 mt-4">Статистика ответов</h2>
+        <ul class="list-group">
+            {% for answer, count in stats.items %}
+                <li class="list-group-item">
+                    &laquo;{{ answer }}&raquo;: {{ count }}
+                </li>
+            {% empty %}
+                <li class="list-group-item">Ответов пока нет.</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h1 class="text-danger">Опрос не найден</h1>
+        <p>Опрос с указанным идентификатором отсутствует.</p>
+    {% endif %}
+
+    <a href="{% url 'surveys:list' %}"
+       class="btn btn-outline-secondary mt-3">
+        &larr; к списку опросов
+    </a>
+{% endblock %}

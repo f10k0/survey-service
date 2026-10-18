@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Опросы - Сервис опросов
+{% endblock %}
+
+{% block content %}
+    <h1>Опросы</h1>
+
+    <p>Всего опросов: {{ surveys|length }}</p>
+
+    {% for survey in surveys %}
+        {% include "surveys/includes/survey_card.html" %}
+    {% empty %}
+        <p>Опросов пока нет.</p>
+    {% endfor %}
+{% endblock %}
