@@ -2,7 +2,8 @@
 
 Приложение для создания опросов и сбора ответов. Консольная версия
 (ПР3) дополнена веб-интерфейсом на Django (ПР5), страницы которого
-построены на шаблонах Django Template Language (ПР6).
+построены на шаблонах Django Template Language (ПР6). Данные хранятся
+в реляционной базе SQLite и читаются SQL-запросами (ПР7).
 
 ## Назначение
 
@@ -17,12 +18,17 @@
 * просматривать список опросов в браузере;
 * просматривать информацию о конкретном опросе (вопросы, статус,
   статистика ответов);
+* фильтровать опросы по теме, смотреть активные опросы;
+* находить опросы, которые пользователь ещё не проходил;
+* смотреть статистику: ответы по опросам, популярные опросы,
+  последние ответы;
 * просматривать список ответов пользователей и конкретный ответ;
 * создавать опросы и регистрировать пользователей (консоль);
 * проходить опросы с проверкой возраста и защитой от повторного
   участия (консоль);
 * искать, фильтровать и сортировать опросы (консоль);
-* хранить данные между запусками в JSON-файлах.
+* хранить данные между запусками (SQLite для веб-версии, JSON для
+  консольной).
 
 ## Используемые технологии
 
@@ -31,7 +37,8 @@
 * Django Template Language (DTL) - шаблоны страниц;
 * HTML5, CSS3, JavaScript;
 * Bootstrap 5.3 (CDN) и собственный CSS проекта;
-* JSON для хранения данных;
+* SQLite и SQL, стандартная библиотека `sqlite3` (ПР7);
+* JSON для хранения данных консольной версии и исходных данных;
 * Git;
 * pytest - автоматизированные тесты;
 * flake8 - проверка качества кода.
@@ -58,7 +65,8 @@
 
 Связи между объектами сохраняются: `response.user.name`,
 `response.survey.title`. Для предметной области реализованы собственные
-Python-классы; Django ORM и база данных пока не используются.
+Python-классы (консольная версия). Веб-интерфейс получает данные
+из SQLite средствами `sqlite3` и SQL; Django ORM пока не используется.
 
 ## Веб-интерфейс
 
@@ -74,6 +82,9 @@ Django; функция `page()` из ПР5 удалена, HTML в Python-код
 | Страница опроса | `/surveys/<int:id>/`   | `surveys.views.survey_detail`    | `surveys/survey_detail.html`           | `surveys:detail`   |
 | Список ответов  | `/responses/`          | `responses.views.responses`      | `responses/response_list.html`         | `responses:list`   |
 | Страница ответа | `/responses/<int:id>/` | `responses.views.response_detail`| `responses/response_detail.html`       | `responses:detail` |
+| Активные опросы | `/surveys/active/`     | `surveys.views.active_surveys`   | `surveys/active_list.html`             | `surveys:active`   |
+| Доступные опросы| `/surveys/available/?user=<id>` | `surveys.views.available_surveys` | `surveys/available.html`   | `surveys:available`|
+| Статистика      | `/responses/statistics/` | `responses.views.statistics`   | `responses/statistics.html`            | `responses:statistics` |
 | Ошибка 404      | любой неизвестный URL  | `homepage.views.page_not_found`  | `404.html`                             | -                  |
 
 Если опрос или ответ с указанным идентификатором не найден, view
@@ -155,6 +166,123 @@ return render(request, "surveys/survey_list.html", context)
 Подключение: `{% load static %}` и `{% static 'homepage/css/style.css' %}`.
 Bootstrap 5.3 подключён через CDN и дополняется собственным CSS.
 
+## База данных SQLite (ПР7)
+
+Данные веб-интерфейса хранятся в файле `data/survey_service.sqlite`.
+Схема - `sql/schema.sql`, перенос данных из JSON - `db/import_json.py`,
+подключение - `db/database.py`, проверенные запросы - `sql/queries.sql`.
+Путь данных: `SQLite -> SQL -> sqlite3 -> view -> context -> шаблон`.
+
+### Структура базы данных
+
+Сущности: пользователь, опрос, вопрос опроса, ответ.
+
+**users** - пользователи
+
+| Поле            | Тип     | Назначение                              |
+|-----------------|---------|-----------------------------------------|
+| `id`            | INTEGER | первичный ключ                          |
+| `name`          | TEXT    | имя, NOT NULL                           |
+| `email`         | TEXT    | почта, NOT NULL, UNIQUE                 |
+| `age`           | INTEGER | возраст, NOT NULL                       |
+| `is_registered` | INTEGER | 1 - зарегистрирован, 0 - нет (DEFAULT 1)|
+
+**surveys** - опросы
+
+| Поле            | Тип     | Назначение                                   |
+|-----------------|---------|----------------------------------------------|
+| `id`            | INTEGER | первичный ключ                               |
+| `title`         | TEXT    | название, NOT NULL                           |
+| `topic`         | TEXT    | тема, NOT NULL                               |
+| `status`        | TEXT    | статус (`активен` и др.), DEFAULT `активен`  |
+| `creation_date` | TEXT    | дата создания, формат YYYY-MM-DD             |
+
+**questions** - вопросы опросов
+
+| Поле        | Тип     | Назначение                                        |
+|-------------|---------|---------------------------------------------------|
+| `id`        | INTEGER | первичный ключ                                    |
+| `survey_id` | INTEGER | внешний ключ -> `surveys.id`                      |
+| `text`      | TEXT    | текст вопроса, NOT NULL                           |
+| `options`   | TEXT    | JSON-список вариантов; NULL - открытый вопрос     |
+
+**responses** - ответы
+
+| Поле        | Тип     | Назначение                       |
+|-------------|---------|----------------------------------|
+| `id`        | INTEGER | первичный ключ                   |
+| `user_id`   | INTEGER | внешний ключ -> `users.id`       |
+| `survey_id` | INTEGER | внешний ключ -> `surveys.id`     |
+| `question`  | TEXT    | текст вопроса                    |
+| `answer`    | TEXT    | ответ                            |
+
+Связи: один опрос - много вопросов и много ответов; один пользователь
+- много ответов; каждый ответ относится к одному пользователю и одному
+опросу. В JSON ответ ссылался на пользователя по `user_email`, в базе -
+по `user_id`; импорт заменяет почту на идентификатор.
+
+### Создание базы и импорт данных
+
+Команды выполняются в PowerShell из корня проекта. Готовый файл базы
+уже лежит в `data/`; команды нужны, чтобы создать базу заново.
+
+```powershell
+Remove-Item .\data\survey_service.sqlite
+python -c "import sqlite3; sqlite3.connect('data/survey_service.sqlite').close()"
+python -c "import sqlite3; conn=sqlite3.connect('data/survey_service.sqlite'); sql=open('sql/schema.sql', encoding='utf-8').read(); conn.executescript(sql); conn.commit(); conn.close()"
+python -m db.import_json
+```
+
+Схема использует `CREATE TABLE IF NOT EXISTS`, поэтому её можно
+выполнять повторно. Импорт очищает таблицы и заполняет их заново, в
+одной транзакции: при ошибке выполняется `rollback()`. Порядок импорта:
+пользователи, опросы с вопросами, ответы (сначала то, на что ссылаются
+внешние ключи).
+
+### Работа с базой из Python
+
+* `db/database.py` - `get_connection()` (включает
+  `PRAGMA foreign_keys = ON` и `row_factory = sqlite3.Row`),
+  `fetch_all()`, `fetch_one()`;
+* значения в SQL передаются только параметрами `?`:
+  `conn.execute(sql, [topic])`; f-строки и конкатенация для подстановки
+  значений не используются;
+* поля результата доступны по именам: `row["title"]`,
+  `{{ survey.title }}`.
+
+### SQL-запросы (`sql/queries.sql`)
+
+21 запрос, проверенный в SQLite; по комментариям видно, где каждый
+используется.
+
+| Вид                  | Запросы (номера в файле) | Где используются                       |
+|----------------------|--------------------------|----------------------------------------|
+| SELECT, списки       | 1, 2, 3                  | список пользователей, темы, вопросы    |
+| WHERE                | 4-9                      | активные опросы, фильтр по теме, поиск доступных опросов (`NOT IN`) |
+| JOIN                 | 10-12                    | ответы с пользователем и опросом       |
+| Агрегатные функции   | 13-15                    | карточки на странице статистики        |
+| GROUP BY, HAVING     | 16-20                    | опросы с числом вопросов, статистика, популярные опросы |
+| ORDER BY, LIMIT      | 21                       | последние ответы                       |
+
+Параметризованные запросы в приложении: тема (`?topic=`), пользователь
+(`?user=`), порог `HAVING` (`?min=`), идентификаторы на страницах
+`/surveys/<id>/` и `/responses/<id>/`.
+
+### Страницы, получающие данные из SQLite
+
+* `/surveys/` - опросы с числом вопросов (LEFT JOIN + GROUP BY), фильтр
+  по теме;
+* `/surveys/active/` - активные опросы (WHERE);
+* `/surveys/available/` - поиск опросов, не пройденных выбранным
+  пользователем (подзапрос NOT IN, параметр `?user=`);
+* `/surveys/<id>/` - опрос, вопросы, статистика ответов (GROUP BY);
+* `/responses/` и `/responses/<id>/` - ответы (JOIN трёх таблиц);
+* `/responses/statistics/` - агрегатные функции, ответы по опросам,
+  популярные опросы (HAVING), последние ответы (LIMIT).
+
+Навигация: Главная | Опросы | Активные опросы | Ответы | Статистика;
+поиск доступных опросов открывается со страницы «Опросы».
+
 ## Структура проекта
 
 ```text
@@ -187,6 +315,8 @@ survey-service/
 │   │   ├── includes/
 │   │   │   ├── survey_card.html
 │   │   │   └── survey_status.html
+│   │   ├── active_list.html
+│   │   ├── available.html
 │   │   ├── survey_detail.html
 │   │   └── survey_list.html
 │   ├── views.py
@@ -194,7 +324,8 @@ survey-service/
 ├── responses/
 │   ├── templates/responses/
 │   │   ├── response_detail.html
-│   │   └── response_list.html
+│   │   ├── response_list.html
+│   │   └── statistics.html
 │   ├── views.py
 │   └── urls.py
 ├── models/                     классы предметной области (ПР3)
@@ -203,8 +334,16 @@ survey-service/
 │   ├── surveys.py
 │   ├── users.py
 │   └── responses.py
-├── data/                       JSON-файлы данных
-│   ├── surveys.json
+├── db/                         работа с SQLite (ПР7)
+│   ├── __init__.py
+│   ├── database.py             подключение, fetch_all(), fetch_one()
+│   └── import_json.py          перенос данных из JSON в SQLite
+├── sql/
+│   ├── schema.sql              создание таблиц
+│   └── queries.sql             проверенные SQL-запросы
+├── data/
+│   ├── survey_service.sqlite   база данных SQLite
+│   ├── surveys.json            исходные данные (JSON)
 │   ├── users.json
 │   └── responses.json
 ├── tests/
@@ -212,11 +351,13 @@ survey-service/
 │   ├── test_users.py
 │   ├── test_responses.py
 │   ├── test_web.py             страницы и 404 (ПР5)
-│   └── test_templates.py       шаблоны, include, static, URL (ПР6)
+│   ├── test_templates.py       шаблоны, include, static, URL (ПР6)
+│   └── test_db.py              схема, импорт, запросы, страницы (ПР7)
 ├── legacy_pr2/                 старые модули ПР2 (не используются)
 └── docs/
     ├── PR5_poyasneniya.md
-    └── PR6_poyasneniya.md
+    ├── PR6_poyasneniya.md
+    └── PR7_poyasneniya.md
 ```
 
 В каждом Django-приложении есть также `admin.py`, `apps.py`,
@@ -231,8 +372,12 @@ survey-service/
   `TEMPLATES` с `DIRS`, пути к JSON-файлам);
 * `survey_service/urls.py` - маршруты верхнего уровня и `handler404`;
 * `homepage/views.py` - `index()` и `page_not_found()`;
-* `surveys/views.py` - `surveys()` и `survey_detail()`;
-* `responses/views.py` - `responses()` и `response_detail()`;
+* `surveys/views.py` - `surveys()`, `active_surveys()`,
+  `survey_detail()`, `available_surveys()` (SQL-запросы к SQLite);
+* `responses/views.py` - `responses()`, `response_detail()`,
+  `statistics()` (SQL-запросы к SQLite);
+* `db/database.py`, `db/import_json.py` - подключение к SQLite и
+  импорт данных из JSON;
 * `models/` - классы `Question`, `Survey`, `User`, `Response` и функции
   работы с коллекциями (в том числе `find_survey_by_id()`,
   `find_response_by_id()`, `get_survey_statistics()`);
@@ -242,12 +387,12 @@ survey-service/
 
 ## Хранение данных
 
-Данные хранятся в JSON-файлах каталога `data/` (`surveys.json`,
-`users.json`, `responses.json`). Загрузку выполняют функции
-`storage.py`: JSON превращается в объекты `Survey`, `User`, `Response`.
-Если у ответа в JSON нет поля `id`, оно назначается по порядку записи.
-Веб-интерфейс только читает данные. Django ORM и база данных в текущей
-версии проекта не используются.
+Веб-интерфейс (ПР7) читает данные из SQLite (`data/survey_service.sqlite`),
+см. раздел «База данных SQLite». JSON-файлы каталога `data/` остались
+в проекте как исходные данные: из них база заполняется скриптом
+`db/import_json.py`, ими же пользуется консольная версия (`main.py`,
+`storage.py`). Веб-интерфейс только читает данные. Django ORM в
+текущей версии проекта не используется.
 
 ## Установка и запуск
 
@@ -261,6 +406,10 @@ python manage.py migrate
 python manage.py check
 python manage.py runserver
 ```
+
+Файл базы данных `data/survey_service.sqlite` входит в проект. Если его
+нужно создать заново, выполните команды из раздела «Создание базы и
+импорт данных».
 
 Веб-интерфейс: <http://127.0.0.1:8000/>
 
@@ -281,9 +430,13 @@ python manage.py runserver
 pytest -v
 ```
 
-Тесты ПР3 проходят без изменений; `tests/test_web.py` и
+Тесты ПР3 проходят без изменений. `tests/test_web.py` и
 `tests/test_templates.py` проверяют страницы, коды ответа, шаблоны,
-`include`, статику, именованные URL и обработку пустых данных.
+`include`, статику, именованные URL и обработку пустых данных;
+`tests/test_db.py` - схему и ключи, импорт из JSON (в том числе откат
+при ошибке), все запросы из `sql/queries.sql`, параметризованные
+запросы (защита от SQL-инъекций), страницы поиска и статистики. Тесты
+работают с временной базой данных и не меняют `data/`.
 
 ## Проверка качества кода
 
@@ -295,12 +448,12 @@ flake8 . --extend-exclude=venv
 
 ## Git
 
-Каждый коммит ПР6 начинается с метки `PR6:`.
+Каждый коммит ПР7 начинается с метки `PR7:`.
 
 ```text
 git status
 git add .
-git commit -m "PR6: add Django templates and static files"
+git commit -m "PR7: add SQLite database and SQL queries"
 git push
 ```
 
@@ -313,21 +466,32 @@ git push
 ## Текущее состояние проекта
 
 Реализовано: предметные классы `Question`, `Survey`, `User`,
-`Response`; консольный интерфейс; хранение данных в JSON; Django-проект
-и приложения `homepage`, `surveys`, `responses`; веб-представления;
-Django Template Language: базовый шаблон, наследование, блоки,
-включаемые шаблоны, контекст, циклы и условия, фильтры; именованные
-URL и пространства имён; статические CSS, JavaScript и изображение;
-собственное оформление поверх Bootstrap; тесты предметной области и
+`Response`; консольный интерфейс; Django-проект и приложения
+`homepage`, `surveys`, `responses`; шаблоны Django Template Language;
+статические файлы; **слой реляционного хранения (ПР7)**: база SQLite,
+схема `sql/schema.sql`, импорт из JSON `db/import_json.py`, 21 SQL-запрос
+в `sql/queries.sql`, получение данных в представлениях через `sqlite3`,
+страницы списка и активных опросов, поиска доступных опросов,
+ответов и статистики, навигация; тесты предметной области и
 веб-интерфейса.
 
-Не реализовано: формы Django, модели Django ORM и работа с базой данных
-(относятся к следующим практическим работам); создание, изменение и
-удаление объектов через веб; регистрация и авторизация.
+На ПР7 данные перенесены из JSON в базу данных SQLite:
+
+* создана база `data/survey_service.sqlite`;
+* таблицы созданы с помощью `sql/schema.sql`;
+* данные перенесены скриптом `db/import_json.py`;
+* SQL-запросы сохранены в `sql/queries.sql`;
+* Django-представления получают данные из SQLite;
+* страницы опросов, ответов, поиска доступных опросов и статистики
+  работают с базой данных.
+
+Не реализовано: формы Django, модели Django ORM и миграции для
+предметной области (следующие практические работы); создание, изменение
+и удаление объектов через веб; регистрация и авторизация.
 
 ## Дальнейшее развитие
 
-Переход от JSON-хранилища к базе данных и Django ORM; формы Django и
-операции создания/изменения через веб (создание опроса, прохождение
-опроса); регистрация и аутентификация; REST API; контейнеризация и
-CI/CD.
+Подключение базы данных к Django с использованием Django ORM; формы
+Django и операции создания/изменения через веб (создание опроса,
+прохождение опроса); регистрация и аутентификация; REST API;
+контейнеризация и CI/CD.

@@ -14,8 +14,8 @@
             <li class="list-group-item">
                 <a href="{% url 'responses:detail' response.id %}">
                     Ответ №{{ response.id }}:
-                    {{ response.user.name|default:"Аноним" }} &rarr;
-                    {{ response.survey.title }}
+                    {{ response.user_name|default:"Аноним" }} &rarr;
+                    {{ response.survey_title }}
                 </a>
             </li>
         {% empty %}

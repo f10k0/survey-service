@@ -7,6 +7,30 @@
 {% block content %}
     <h1>Опросы</h1>
 
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label for="topic" class="form-label">Тема</label>
+            <select id="topic" name="topic" class="form-select">
+                <option value="">Все темы</option>
+                {% for item in topics %}
+                    <option value="{{ item.topic }}"
+                        {% if item.topic == selected_topic %}selected{% endif %}>
+                        {{ item.topic }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'surveys:available' %}"
+               class="btn btn-outline-secondary">
+                Найти доступный опрос
+            </a>
+        </div>
+    </form>
+
     <p>Всего опросов: {{ surveys|length }}</p>
 
     {% for survey in surveys %}

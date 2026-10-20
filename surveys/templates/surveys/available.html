@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Доступные опросы - Сервис опросов
+{% endblock %}
+
+{% block content %}
+    <h1>Доступные опросы</h1>
+
+    <p>
+        Выберите пользователя: сайт покажет активные опросы, которые он
+        ещё не проходил.
+    </p>
+
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-auto">
+            <label for="user" class="form-label">Пользователь</label>
+            <select id="user" name="user" class="form-select">
+                <option value="">Не выбран</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}"
+                        {% if selected_user.id == user.id %}selected{% endif %}>
+                        {{ user.name }} ({{ user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Найти</button>
+        </div>
+    </form>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% elif selected_user %}
+        <h2 class="h4">Для пользователя {{ selected_user.name }}</h2>
+        {% for survey in surveys %}
+            {% include "surveys/includes/survey_card.html" %}
+        {% empty %}
+            <p>Доступных опросов нет: все активные опросы уже пройдены.</p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'surveys:list' %}"
+       class="btn btn-outline-secondary mt-3">
+        &larr; к списку опросов
+    </a>
+{% endblock %}

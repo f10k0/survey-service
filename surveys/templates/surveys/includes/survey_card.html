@@ -6,7 +6,7 @@
 
         <p class="card-text">
             Тема: {{ survey.topic }}<br>
-            Вопросов: {{ survey.questions|length }}<br>
+            Вопросов: {{ survey.questions_count }}<br>
             Статус: {% include "surveys/includes/survey_status.html" %}
         </p>
 

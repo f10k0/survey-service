@@ -17,3 +17,4 @@ htmlcov/
 *.sqlite
 *.sqlite3
 .env
+!data/survey_service.sqlite

@@ -1,48 +1,11 @@
 """Тесты веб-интерфейса (ПР5): страницы, динамические URL, 404."""
 
-import json
-
-import pytest
 from django.test import Client, override_settings
 
 from models import Question, Survey, User
 from models.responses import add_response, find_response_by_id
 
 client = Client()
-
-
-@pytest.fixture
-def data_files(tmp_path):
-    """Подменить JSON-файлы данных временными (с «опасным» текстом)."""
-    surveys = [{
-        "id": 1,
-        "title": "Опрос <b>1</b>",
-        "topic": "IT",
-        "questions": [
-            {"text": "Язык?", "options": ["Python", "Java"]},
-            {"text": "Комментарий", "options": None},
-        ],
-        "status": "активен",
-        "creation_date": "2026-09-20",
-    }]
-    users = [{"id": 1, "name": "Анна", "email": "a@b.ru", "age": 20,
-              "is_registered": True}]
-    responses = [
-        {"user_email": "a@b.ru", "survey_id": 1,
-         "question": "Язык?", "answer": "Python"},
-        {"user_email": "a@b.ru", "survey_id": 1,
-         "question": "Комментарий", "answer": "<script>x</script>"},
-    ]
-    paths = {}
-    for name, data in (("surveys", surveys), ("users", users),
-                       ("responses", responses)):
-        path = tmp_path / f"{name}.json"
-        path.write_text(json.dumps(data), encoding="utf-8")
-        paths[name] = path
-    with override_settings(SURVEYS_FILE=paths["surveys"],
-                           USERS_FILE=paths["users"],
-                           RESPONSES_FILE=paths["responses"]):
-        yield
 
 
 def test_index_page():
@@ -52,13 +15,13 @@ def test_index_page():
     assert "bootstrap" in response.content.decode()
 
 
-def test_surveys_list(data_files):
+def test_surveys_list(sample_db):
     response = client.get("/surveys/")
     assert response.status_code == 200
     assert 'href="/surveys/1/"' in response.content.decode()
 
 
-def test_survey_detail(data_files):
+def test_survey_detail(sample_db):
     response = client.get("/surveys/1/")
     html = response.content.decode()
     assert response.status_code == 200
@@ -66,26 +29,26 @@ def test_survey_detail(data_files):
     assert "активен" in html
 
 
-def test_survey_not_found(data_files):
+def test_survey_not_found(sample_db):
     response = client.get("/surveys/999/")
     assert response.status_code == 404
     assert "Опрос не найден" in response.content.decode()
 
 
-def test_responses_list_and_detail(data_files):
+def test_responses_list_and_detail(sample_db):
     assert client.get("/responses/").status_code == 200
     response = client.get("/responses/1/")
     assert response.status_code == 200
     assert "Анна" in response.content.decode()
 
 
-def test_response_not_found(data_files):
+def test_response_not_found(sample_db):
     response = client.get("/responses/999/")
     assert response.status_code == 404
     assert "Ответ не найден" in response.content.decode()
 
 
-def test_html_is_escaped(data_files):
+def test_html_is_escaped(sample_db):
     assert "<b>1</b>" not in client.get("/surveys/").content.decode()
     html = client.get("/responses/2/").content.decode()
     assert "<script>x</script>" not in html
@@ -106,7 +69,7 @@ def test_custom_404_page():
     assert 'href="/"' in html
 
 
-def test_real_data_files_load():
+def test_real_sample_db_load():
     """Проекты ПР3: реальные JSON-файлы открываются без ошибок."""
     assert client.get("/surveys/").status_code == 200
     assert client.get("/responses/").status_code == 200

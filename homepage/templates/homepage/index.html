@@ -18,7 +18,13 @@
     <a href="{% url 'surveys:list' %}" class="btn btn-primary me-2">
         Опросы
     </a>
-    <a href="{% url 'responses:list' %}" class="btn btn-secondary">
+    <a href="{% url 'surveys:active' %}" class="btn btn-success me-2">
+        Активные опросы
+    </a>
+    <a href="{% url 'responses:list' %}" class="btn btn-secondary me-2">
         Ответы
+    </a>
+    <a href="{% url 'responses:statistics' %}" class="btn btn-outline-primary">
+        Статистика
     </a>
 {% endblock %}

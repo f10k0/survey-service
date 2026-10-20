@@ -8,6 +8,7 @@ app_name = "responses"
 
 urlpatterns = [
     path("", views.responses, name="list"),
+    path("statistics/", views.statistics, name="statistics"),
     path(
         "<int:response_id>/",
         views.response_detail,

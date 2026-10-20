@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Статистика - Сервис опросов
+{% endblock %}
+
+{% block content %}
+    <h1>Статистика</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card"><div class="card-body">
+                <div class="text-muted">Активных опросов</div>
+                <div class="fs-3">{{ active_surveys.active_surveys }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card"><div class="card-body">
+                <div class="text-muted">Всего ответов</div>
+                <div class="fs-3">{{ totals.total_responses }}</div>
+                <div class="text-muted">
+                    участников: {{ totals.respondents }}
+                </div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card"><div class="card-body">
+                <div class="text-muted">Возраст пользователей</div>
+                <div class="fs-3">
+                    {{ users_age.avg_age|default_if_none:"—" }}
+                </div>
+                <div class="text-muted">
+                    мин. {{ users_age.min_age|default_if_none:"—" }},
+                    макс. {{ users_age.max_age|default_if_none:"—" }}
+                </div>
+            </div></div>
+        </div>
+    </div>
+
+    <h2 class="h4">Ответов по опросам</h2>
+    <ul class="list-group mb-4">
+        {% for item in per_survey %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ item.title }}</span>
+                <span class="badge bg-primary">{{ item.responses_count }}</span>
+            </li>
+        {% empty %}
+            <li class="list-group-item">Опросов пока нет.</li>
+        {% endfor %}
+    </ul>
+
+    <h2 class="h4">Популярные опросы</h2>
+    <form method="get" class="row g-2 align-items-end mb-2">
+        <div class="col-auto">
+            <label for="min" class="form-label">
+                Больше скольких ответов
+            </label>
+            <input type="number" min="0" id="min" name="min"
+                   value="{{ min_responses }}" class="form-control">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+    </form>
+    <ul class="list-group mb-4">
+        {% for item in popular %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ item.title }}</span>
+                <span class="badge bg-success">{{ item.responses_count }}</span>
+            </li>
+        {% empty %}
+            <li class="list-group-item">
+                Нет опросов с числом ответов больше {{ min_responses }}.
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2 class="h4">Последние ответы</h2>
+    <ul class="list-group">
+        {% for item in last_responses %}
+            <li class="list-group-item">
+                <a href="{% url 'responses:detail' item.id %}">
+                    Ответ №{{ item.id }}</a>:
+                {{ item.user_name }} &rarr; {{ item.survey_title }}:
+                &laquo;{{ item.answer }}&raquo;
+            </li>
+        {% empty %}
+            <li class="list-group-item">Ответов пока нет.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

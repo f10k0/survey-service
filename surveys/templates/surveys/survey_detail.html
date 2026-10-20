@@ -33,9 +33,9 @@
             </div>
         </div>
 
-        <h2 class="h4 mt-4">Вопросы ({{ survey.questions|length }})</h2>
+        <h2 class="h4 mt-4">Вопросы ({{ questions|length }})</h2>
         <ul class="list-group">
-            {% for question in survey.questions %}
+            {% for question in questions %}
                 <li class="list-group-item">
                     {{ question.text }}
                     {% if question.is_open %}
@@ -51,9 +51,11 @@
 
         <h2 class="h4 mt-4">Статистика ответов</h2>
         <ul class="list-group">
-            {% for answer, count in stats.items %}
+            {% for item in stats %}
                 <li class="list-group-item">
-                    &laquo;{{ answer }}&raquo;: {{ count }}
+                    {{ item.question }}:
+                    &laquo;{{ item.answer }}&raquo; &mdash;
+                    {{ item.answers_count }}
                 </li>
             {% empty %}
                 <li class="list-group-item">Ответов пока нет.</li>

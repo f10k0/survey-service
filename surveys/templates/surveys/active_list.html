@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Активные опросы - Сервис опросов
+{% endblock %}
+
+{% block content %}
+    <h1>Активные опросы</h1>
+
+    <p>Опросов, в которых можно участвовать: {{ surveys|length }}</p>
+
+    {% for survey in surveys %}
+        {% include "surveys/includes/survey_card.html" %}
+    {% empty %}
+        <p>Активных опросов нет.</p>
+    {% endfor %}
+{% endblock %}

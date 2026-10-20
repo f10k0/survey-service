@@ -16,13 +16,13 @@
 
                 <p class="card-text">
                     <strong>Пользователь:</strong>
-                    {{ response.user.name }} ({{ response.user.email }})
+                    {{ response.user_name }} ({{ response.user_email }})
                 </p>
 
                 <p class="card-text">
                     <strong>Опрос:</strong>
-                    <a href="{% url 'surveys:detail' response.survey.id %}">
-                        {{ response.survey.title }}
+                    <a href="{% url 'surveys:detail' response.survey_id %}">
+                        {{ response.survey_title }}
                     </a>
                 </p>
 
